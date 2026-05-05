@@ -80,14 +80,14 @@ function moveToBoat(id) {
   }
   bank.delete(id);
   state.boat.push(id);
-  postActionCheck();
+  refreshAfterMove();
 }
 
 function moveFromBoat(id) {
   const bank = getCurrentBankSet();
   state.boat = state.boat.filter((x) => x !== id);
   bank.add(id);
-  postActionCheck();
+  refreshAfterMove();
 }
 
 function isFailure(peopleIds) {
@@ -158,10 +158,35 @@ function render() {
       : "开船过河（回左岸需至少 1 人）";
 }
 
-function postActionCheck() {
+function updateTurnStatus() {
+  updateStatus(
+    `当前船在${state.boatSide === "left" ? "左岸" : "右岸"}。点击角色可上下船。`
+  );
+}
+
+function refreshAfterMove() {
+  render();
+  updateTurnStatus();
+}
+
+function sail() {
+  const minRequired = state.boatSide === "left" ? 2 : 1;
+  if (state.boat.length < minRequired) {
+    updateStatus(
+      state.boatSide === "left"
+        ? "从左岸出发时，船上必须有 2 人。"
+        : "从右岸返回时，船上至少要有 1 人。",
+      true
+    );
+    return;
+  }
+  const targetBank = getOtherBankSet();
+  state.boat.forEach((id) => targetBank.add(id));
+  state.boat = [];
+  state.boatSide = state.boatSide === "left" ? "right" : "left";
+
   const failureMsg = checkAllFailure();
   render();
-
   if (failureMsg) {
     updateStatus(failureMsg, true);
     setTimeout(() => {
@@ -180,27 +205,7 @@ function postActionCheck() {
     return;
   }
 
-  updateStatus(
-    `当前船在${state.boatSide === "left" ? "左岸" : "右岸"}。点击角色可上下船。`
-  );
-}
-
-function sail() {
-  const minRequired = state.boatSide === "left" ? 2 : 1;
-  if (state.boat.length < minRequired) {
-    updateStatus(
-      state.boatSide === "left"
-        ? "从左岸出发时，船上必须有 2 人。"
-        : "从右岸返回时，船上至少要有 1 人。",
-      true
-    );
-    return;
-  }
-  const targetBank = getOtherBankSet();
-  state.boat.forEach((id) => targetBank.add(id));
-  state.boat = [];
-  state.boatSide = state.boatSide === "left" ? "right" : "left";
-  postActionCheck();
+  updateTurnStatus();
 }
 
 function resetGame() {
@@ -230,3 +235,4 @@ sailBtn.addEventListener("click", sail);
 resetBtn.addEventListener("click", resetGame);
 
 render();
+updateTurnStatus();
