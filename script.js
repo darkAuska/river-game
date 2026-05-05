@@ -31,8 +31,13 @@ const state = {
     right: new Set()
   },
   boatSide: "left",
-  boat: []
+  boat: [],
+  locked: false
 };
+
+const FAILURE_POPUP_MS = 2600;
+let failurePopupTimer = null;
+let failureResetTimer = null;
 
 const leftCharactersEl = document.getElementById("left-characters");
 const rightCharactersEl = document.getElementById("right-characters");
@@ -70,6 +75,9 @@ function getOtherBankSet() {
 }
 
 function moveToBoat(id) {
+  if (state.locked) {
+    return;
+  }
   const bank = getCurrentBankSet();
   if (!bank.has(id)) {
     return;
@@ -84,6 +92,9 @@ function moveToBoat(id) {
 }
 
 function moveFromBoat(id) {
+  if (state.locked) {
+    return;
+  }
   const bank = getCurrentBankSet();
   state.boat = state.boat.filter((x) => x !== id);
   bank.add(id);
@@ -150,12 +161,49 @@ function render() {
 
   const minRequired = state.boatSide === "left" ? 2 : 1;
   const canSail = state.boat.length >= minRequired;
-  sailBtn.disabled = !canSail;
+  sailBtn.disabled = !canSail || state.locked;
   sailBtn.textContent = canSail
     ? `开船去${state.boatSide === "left" ? "右岸" : "左岸"}`
     : state.boatSide === "left"
       ? "开船过河（去右岸需 2 人）"
       : "开船过河（回左岸需至少 1 人）";
+}
+
+function ensureFailurePopup() {
+  let popup = document.getElementById("failure-popup");
+  if (!popup) {
+    popup = document.createElement("div");
+    popup.id = "failure-popup";
+    popup.className = "failure-popup";
+    document.body.appendChild(popup);
+  }
+  return popup;
+}
+
+function hideFailurePopup() {
+  const popup = document.getElementById("failure-popup");
+  if (popup) {
+    popup.classList.remove("show");
+  }
+  if (failurePopupTimer) {
+    clearTimeout(failurePopupTimer);
+    failurePopupTimer = null;
+  }
+  if (failureResetTimer) {
+    clearTimeout(failureResetTimer);
+    failureResetTimer = null;
+  }
+}
+
+function showFailurePopup(message) {
+  const popup = ensureFailurePopup();
+  hideFailurePopup();
+  popup.textContent = message;
+  popup.classList.add("show");
+
+  failurePopupTimer = setTimeout(() => {
+    popup.classList.remove("show");
+  }, FAILURE_POPUP_MS);
 }
 
 function updateTurnStatus() {
@@ -170,6 +218,9 @@ function refreshAfterMove() {
 }
 
 function sail() {
+  if (state.locked) {
+    return;
+  }
   const minRequired = state.boatSide === "left" ? 2 : 1;
   if (state.boat.length < minRequired) {
     updateStatus(
@@ -188,11 +239,12 @@ function sail() {
   const failureMsg = checkAllFailure();
   render();
   if (failureMsg) {
+    state.locked = true;
     updateStatus(failureMsg, true);
-    setTimeout(() => {
-      alert(failureMsg);
+    showFailurePopup(failureMsg);
+    failureResetTimer = setTimeout(() => {
       resetGame();
-    }, 20);
+    }, FAILURE_POPUP_MS + 220);
     return;
   }
 
@@ -209,15 +261,20 @@ function sail() {
 }
 
 function resetGame() {
+  hideFailurePopup();
   state.banks.left = new Set(characters.map((c) => c.id));
   state.banks.right = new Set();
   state.boat = [];
   state.boatSide = "left";
+  state.locked = false;
   render();
   updateStatus("点击角色将其上下船，满足条件后点击“开船过河”。");
 }
 
 document.addEventListener("click", (event) => {
+  if (state.locked) {
+    return;
+  }
   const target = event.target.closest(".character");
   if (!target) {
     return;
