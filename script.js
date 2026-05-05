@@ -101,33 +101,43 @@ function moveFromBoat(id) {
   refreshAfterMove();
 }
 
-function isFailure(peopleIds) {
+function collectGroupFailures(peopleIds, groupName) {
   if (peopleIds.length !== 2) {
-    return null;
+    return [];
   }
+  const failures = [];
   const ids = new Set(peopleIds);
 
   if (ids.has("lady") && ids.has("sato")) {
-    return "邻家大姐姐和佐藤君被单独留在一起，挑战失败。";
+    failures.push(`${groupName}：邻家大姐姐和佐藤君被单独留在一起。`);
   }
   if (ids.has("lady") && ids.has("ryu")) {
-    return "隆君和邻家大姐姐被单独留在一起，挑战失败。";
+    failures.push(`${groupName}：隆君和邻家大姐姐被单独留在一起。`);
   }
   if (ids.has("unicorn")) {
     const otherId = peopleIds.find((id) => id !== "unicorn");
     const other = getCharacterById(otherId);
     if (other && other.gender === "male") {
-      return "独角兽不能与男性单独相处，挑战失败。";
+      failures.push(`${groupName}：独角兽不能与男性单独相处。`);
     }
   }
-  return null;
+  return failures;
 }
 
 function checkAllFailure() {
-  const leftIds = [...state.banks.left];
-  const rightIds = [...state.banks.right];
-  const boatIds = [...state.boat];
-  return isFailure(leftIds) || isFailure(rightIds) || isFailure(boatIds);
+  const failures = [
+    ...collectGroupFailures([...state.banks.left], "左岸"),
+    ...collectGroupFailures([...state.banks.right], "右岸"),
+    ...collectGroupFailures([...state.boat], "船上")
+  ];
+  return [...new Set(failures)];
+}
+
+function buildFailureMessage(failures) {
+  if (failures.length === 1) {
+    return `挑战失败：${failures[0]}`;
+  }
+  return `挑战失败，触发 ${failures.length} 条规则：\n- ${failures.join("\n- ")}`;
 }
 
 function checkWin() {
@@ -213,18 +223,18 @@ function updateTurnStatus() {
 }
 
 function refreshAfterMove() {
-  const failureMsg = checkAllFailure();
   render();
-  if (failureMsg) {
-    state.locked = true;
-    updateStatus(failureMsg, true);
-    showFailurePopup(failureMsg);
-    failureResetTimer = setTimeout(() => {
-      resetGame();
-    }, FAILURE_POPUP_MS + 220);
-    return;
-  }
   updateTurnStatus();
+}
+
+function handleFailure(failures) {
+  const failureMsg = buildFailureMessage(failures);
+  state.locked = true;
+  updateStatus(failureMsg, true);
+  showFailurePopup(failureMsg);
+  failureResetTimer = setTimeout(() => {
+    resetGame();
+  }, FAILURE_POPUP_MS + 220);
 }
 
 function sail() {
@@ -241,20 +251,25 @@ function sail() {
     );
     return;
   }
+
+  // 仅在点击开船后检测：先检查“开船瞬间”的两岸与船上状态。
+  const preSailFailures = checkAllFailure();
+  if (preSailFailures.length > 0) {
+    render();
+    handleFailure(preSailFailures);
+    return;
+  }
+
   const targetBank = getOtherBankSet();
   state.boat.forEach((id) => targetBank.add(id));
   state.boat = [];
   state.boatSide = state.boatSide === "left" ? "right" : "left";
 
-  const failureMsg = checkAllFailure();
+  // 再检查“到岸后”的两岸与船上状态。
+  const failures = checkAllFailure();
   render();
-  if (failureMsg) {
-    state.locked = true;
-    updateStatus(failureMsg, true);
-    showFailurePopup(failureMsg);
-    failureResetTimer = setTimeout(() => {
-      resetGame();
-    }, FAILURE_POPUP_MS + 220);
+  if (failures.length > 0) {
+    handleFailure(failures);
     return;
   }
 

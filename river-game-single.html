@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>独角兽过河谜题（单文件版）</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Microsoft YaHei", sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+    .game {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 24px 16px 36px;
+    }
+    .game-header h1 { margin: 0; font-size: 34px; }
+    .game-header p { margin: 10px 0 0; color: #374151; }
+    .rules {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+    }
+    .rules h2 { margin: 0 0 8px; font-size: 20px; }
+    .rules ul { margin: 0; padding-left: 20px; }
+    .rules li + li { margin-top: 6px; }
+    .banks {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: 1fr 320px 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+    .bank, .river {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      min-height: 370px;
+      padding: 14px;
+    }
+    .bank h3, .boat-area h3 { margin: 0 0 12px; }
+    .characters { display: grid; gap: 10px; }
+    .character {
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #f9fafb;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-align: left;
+    }
+    .character:hover { transform: translateY(-1px); border-color: #818cf8; }
+    .character .avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 1px solid #d1d5db;
+      background: #e0e7ff;
+      color: #3730a3;
+      font-weight: 800;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .avatar-lady { background: #fee2e2; color: #991b1b; }
+    .avatar-ryu { background: #ffedd5; color: #9a3412; }
+    .avatar-unicorn { background: #dcfce7; color: #166534; }
+    .character .info { min-width: 0; }
+    .character .title { font-weight: 700; }
+    .character .meta { margin-top: 4px; font-size: 12px; color: #4b5563; }
+    .river {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .boat-area { width: 100%; text-align: center; }
+    .boat {
+      margin: 0 auto 14px;
+      width: 220px;
+      min-height: 140px;
+      border: 2px dashed #9ca3af;
+      border-radius: 16px;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: #f3f4f6;
+    }
+    .slot {
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      min-height: 92px;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+    }
+    .slot .character { width: 100%; margin: 0; padding: 8px; }
+    .slot .character .avatar {
+      width: 42px;
+      height: 42px;
+      font-size: 18px;
+    }
+    .controls {
+      margin-top: 14px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    #status { margin: 0; font-weight: 600; }
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .primary-btn { background: #2563eb; color: #ffffff; }
+    .primary-btn:disabled { background: #9ca3af; cursor: not-allowed; }
+    .ghost-btn { border: 1px solid #cbd5e1; background: #ffffff; }
+    .failure-popup {
+      position: fixed;
+      left: 50%;
+      top: 24px;
+      transform: translateX(-50%) translateY(-10px);
+      background: #b91c1c;
+      color: #ffffff;
+      padding: 12px 18px;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      font-weight: 700;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      pointer-events: none;
+      white-space: pre-line;
+    }
+    .failure-popup.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    @media (max-width: 900px) {
+      .banks { grid-template-columns: 1fr; }
+      .river, .bank { min-height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main class="game">
+    <header class="game-header">
+      <h1>把所有人平安送到对岸</h1>
+      <p>小船最多载 2 人；去右岸必须 2 人，回左岸至少 1 人。</p>
+    </header>
+
+    <section class="rules">
+      <h2>危险规则</h2>
+      <ul>
+        <li>邻家大姐姐和佐藤君单独相处时，佐藤君会出事。</li>
+        <li>隆君和邻家大姐姐单独相处时，邻家大姐姐会出事。</li>
+        <li>独角兽不能与男性单独相处（含同船或同岸仅 2 人）。</li>
+      </ul>
+    </section>
+
+    <section class="banks">
+      <div class="bank" id="left-bank">
+        <h3>左岸</h3>
+        <div class="characters" id="left-characters"></div>
+      </div>
+
+      <div class="river">
+        <div class="boat-area">
+          <h3>小船</h3>
+          <div class="boat" id="boat-slots">
+            <div class="slot" data-slot="0"></div>
+            <div class="slot" data-slot="1"></div>
+          </div>
+          <button id="sail-btn" class="primary-btn">开船过河</button>
+        </div>
+      </div>
+
+      <div class="bank" id="right-bank">
+        <h3>右岸</h3>
+        <div class="characters" id="right-characters"></div>
+      </div>
+    </section>
+
+    <section class="controls">
+      <p id="status">点击角色将其上下船，满足条件后点击“开船过河”。</p>
+      <button id="reset-btn" class="ghost-btn">重新开始</button>
+    </section>
+  </main>
+
+  <script>
+    const characters = [
+      { id: "sato", name: "佐藤君", avatarText: "佐", gender: "male", note: "可爱小学生" },
+      { id: "lady", name: "邻家大姐姐", avatarText: "姐", gender: "female", note: "单独和佐藤君在一起会出事" },
+      { id: "ryu", name: "隆君", avatarText: "隆", gender: "male", note: "单独和邻家大姐姐在一起会出事" },
+      { id: "unicorn", name: "独角兽", avatarText: "兽", gender: "female", note: "不能和男性单独相处" }
+    ];
+
+    const state = {
+      banks: {
+        left: new Set(characters.map((c) => c.id)),
+        right: new Set()
+      },
+      boatSide: "left",
+      boat: [],
+      locked: false
+    };
+
+    const FAILURE_POPUP_MS = 2600;
+    let failurePopupTimer = null;
+    let failureResetTimer = null;
+
+    const leftCharactersEl = document.getElementById("left-characters");
+    const rightCharactersEl = document.getElementById("right-characters");
+    const boatSlotsEl = document.getElementById("boat-slots");
+    const sailBtn = document.getElementById("sail-btn");
+    const resetBtn = document.getElementById("reset-btn");
+    const statusEl = document.getElementById("status");
+
+    function getCharacterById(id) {
+      return characters.find((c) => c.id === id);
+    }
+
+    function renderCharacterCard(id) {
+      const c = getCharacterById(id);
+      const card = document.createElement("button");
+      card.className = "character";
+      card.type = "button";
+      card.dataset.id = c.id;
+      card.innerHTML = `
+        <div class="avatar avatar-${c.id}">${c.avatarText}</div>
+        <div class="info">
+          <div class="title">${c.name}</div>
+          <div class="meta">${c.note}</div>
+        </div>
+      `;
+      return card;
+    }
+
+    function getCurrentBankSet() {
+      return state.boatSide === "left" ? state.banks.left : state.banks.right;
+    }
+
+    function getOtherBankSet() {
+      return state.boatSide === "left" ? state.banks.right : state.banks.left;
+    }
+
+    function moveToBoat(id) {
+      if (state.locked) return;
+      const bank = getCurrentBankSet();
+      if (!bank.has(id)) return;
+      if (state.boat.length >= 2) {
+        updateStatus("小船最多只能载 2 人。", true);
+        return;
+      }
+      bank.delete(id);
+      state.boat.push(id);
+      refreshAfterMove();
+    }
+
+    function moveFromBoat(id) {
+      if (state.locked) return;
+      const bank = getCurrentBankSet();
+      state.boat = state.boat.filter((x) => x !== id);
+      bank.add(id);
+      refreshAfterMove();
+    }
+
+    function collectGroupFailures(peopleIds, groupName) {
+      if (peopleIds.length !== 2) return [];
+      const failures = [];
+      const ids = new Set(peopleIds);
+      if (ids.has("lady") && ids.has("sato")) {
+        failures.push(`${groupName}：邻家大姐姐和佐藤君被单独留在一起。`);
+      }
+      if (ids.has("lady") && ids.has("ryu")) {
+        failures.push(`${groupName}：隆君和邻家大姐姐被单独留在一起。`);
+      }
+      if (ids.has("unicorn")) {
+        const otherId = peopleIds.find((id) => id !== "unicorn");
+        const other = getCharacterById(otherId);
+        if (other && other.gender === "male") {
+          failures.push(`${groupName}：独角兽不能与男性单独相处。`);
+        }
+      }
+      return failures;
+    }
+
+    function checkAllFailure() {
+      const failures = [
+        ...collectGroupFailures([...state.banks.left], "左岸"),
+        ...collectGroupFailures([...state.banks.right], "右岸"),
+        ...collectGroupFailures([...state.boat], "船上")
+      ];
+      return [...new Set(failures)];
+    }
+
+    function buildFailureMessage(failures) {
+      if (failures.length === 1) {
+        return `挑战失败：${failures[0]}`;
+      }
+      return `挑战失败，触发 ${failures.length} 条规则：\n- ${failures.join("\n- ")}`;
+    }
+
+    function checkWin() {
+      return state.banks.right.size === characters.length && state.boat.length === 0;
+    }
+
+    function updateStatus(text, isError = false) {
+      statusEl.textContent = text;
+      statusEl.style.color = isError ? "#b91c1c" : "#1f2937";
+    }
+
+    function render() {
+      leftCharactersEl.innerHTML = "";
+      rightCharactersEl.innerHTML = "";
+      boatSlotsEl.querySelectorAll(".slot").forEach((slot) => {
+        slot.innerHTML = "";
+      });
+
+      [...state.banks.left].forEach((id) => leftCharactersEl.appendChild(renderCharacterCard(id)));
+      [...state.banks.right].forEach((id) => rightCharactersEl.appendChild(renderCharacterCard(id)));
+      state.boat.forEach((id, index) => {
+        const slot = boatSlotsEl.querySelector(`.slot[data-slot="${index}"]`);
+        if (slot) slot.appendChild(renderCharacterCard(id));
+      });
+
+      const minRequired = state.boatSide === "left" ? 2 : 1;
+      const canSail = state.boat.length >= minRequired;
+      sailBtn.disabled = !canSail || state.locked;
+      sailBtn.textContent = canSail
+        ? `开船去${state.boatSide === "left" ? "右岸" : "左岸"}`
+        : state.boatSide === "left"
+          ? "开船过河（去右岸需 2 人）"
+          : "开船过河（回左岸需至少 1 人）";
+    }
+
+    function ensureFailurePopup() {
+      let popup = document.getElementById("failure-popup");
+      if (!popup) {
+        popup = document.createElement("div");
+        popup.id = "failure-popup";
+        popup.className = "failure-popup";
+        document.body.appendChild(popup);
+      }
+      return popup;
+    }
+
+    function hideFailurePopup() {
+      const popup = document.getElementById("failure-popup");
+      if (popup) popup.classList.remove("show");
+      if (failurePopupTimer) {
+        clearTimeout(failurePopupTimer);
+        failurePopupTimer = null;
+      }
+      if (failureResetTimer) {
+        clearTimeout(failureResetTimer);
+        failureResetTimer = null;
+      }
+    }
+
+    function showFailurePopup(message) {
+      const popup = ensureFailurePopup();
+      hideFailurePopup();
+      popup.textContent = message;
+      popup.classList.add("show");
+      failurePopupTimer = setTimeout(() => {
+        popup.classList.remove("show");
+      }, FAILURE_POPUP_MS);
+    }
+
+    function updateTurnStatus() {
+      updateStatus(`当前船在${state.boatSide === "left" ? "左岸" : "右岸"}。点击角色可上下船。`);
+    }
+
+    function refreshAfterMove() {
+      render();
+      updateTurnStatus();
+    }
+
+    function handleFailure(failures) {
+      const failureMsg = buildFailureMessage(failures);
+      state.locked = true;
+      updateStatus(failureMsg, true);
+      showFailurePopup(failureMsg);
+      failureResetTimer = setTimeout(() => {
+        resetGame();
+      }, FAILURE_POPUP_MS + 220);
+    }
+
+    function sail() {
+      if (state.locked) return;
+      const minRequired = state.boatSide === "left" ? 2 : 1;
+      if (state.boat.length < minRequired) {
+        updateStatus(
+          state.boatSide === "left"
+            ? "从左岸出发时，船上必须有 2 人。"
+            : "从右岸返回时，船上至少要有 1 人。",
+          true
+        );
+        return;
+      }
+
+      // 仅在点击开船后检测：先检查开船瞬间状态（含船上）。
+      const preSailFailures = checkAllFailure();
+      if (preSailFailures.length > 0) {
+        render();
+        handleFailure(preSailFailures);
+        return;
+      }
+
+      const targetBank = getOtherBankSet();
+      state.boat.forEach((id) => targetBank.add(id));
+      state.boat = [];
+      state.boatSide = state.boatSide === "left" ? "right" : "left";
+
+      // 再检查到岸后状态。
+      const failures = checkAllFailure();
+      render();
+      if (failures.length > 0) {
+        handleFailure(failures);
+        return;
+      }
+
+      if (checkWin()) {
+        const msg = "恭喜！你已经把所有人安全送到右岸。";
+        updateStatus(msg);
+        setTimeout(() => {
+          alert(msg);
+        }, 20);
+        return;
+      }
+      updateTurnStatus();
+    }
+
+    function resetGame() {
+      hideFailurePopup();
+      state.banks.left = new Set(characters.map((c) => c.id));
+      state.banks.right = new Set();
+      state.boat = [];
+      state.boatSide = "left";
+      state.locked = false;
+      render();
+      updateStatus("点击角色将其上下船，满足条件后点击“开船过河”。");
+    }
+
+    document.addEventListener("click", (event) => {
+      if (state.locked) return;
+      const target = event.target.closest(".character");
+      if (!target) return;
+      const id = target.dataset.id;
+      if (state.boat.includes(id)) {
+        moveFromBoat(id);
+      } else {
+        moveToBoat(id);
+      }
+    });
+
+    sailBtn.addEventListener("click", sail);
+    resetBtn.addEventListener("click", resetGame);
+
+    render();
+    updateTurnStatus();
+  </script>
+</body>
+</html>
