@@ -148,11 +148,14 @@ function render() {
     }
   });
 
-  const canSail = state.boat.length >= 2;
+  const minRequired = state.boatSide === "left" ? 2 : 1;
+  const canSail = state.boat.length >= minRequired;
   sailBtn.disabled = !canSail;
   sailBtn.textContent = canSail
     ? `开船去${state.boatSide === "left" ? "右岸" : "左岸"}`
-    : "开船过河（船上至少 2 人）";
+    : state.boatSide === "left"
+      ? "开船过河（去右岸需 2 人）"
+      : "开船过河（回左岸需至少 1 人）";
 }
 
 function postActionCheck() {
@@ -183,8 +186,14 @@ function postActionCheck() {
 }
 
 function sail() {
-  if (state.boat.length < 2) {
-    updateStatus("船上至少要有 2 人才能开船。", true);
+  const minRequired = state.boatSide === "left" ? 2 : 1;
+  if (state.boat.length < minRequired) {
+    updateStatus(
+      state.boatSide === "left"
+        ? "从左岸出发时，船上必须有 2 人。"
+        : "从右岸返回时，船上至少要有 1 人。",
+      true
+    );
     return;
   }
   const targetBank = getOtherBankSet();
