@@ -213,7 +213,17 @@ function updateTurnStatus() {
 }
 
 function refreshAfterMove() {
+  const failureMsg = checkAllFailure();
   render();
+  if (failureMsg) {
+    state.locked = true;
+    updateStatus(failureMsg, true);
+    showFailurePopup(failureMsg);
+    failureResetTimer = setTimeout(() => {
+      resetGame();
+    }, FAILURE_POPUP_MS + 220);
+    return;
+  }
   updateTurnStatus();
 }
 
