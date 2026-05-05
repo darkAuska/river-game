@@ -1,0 +1,231 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Microsoft YaHei", sans-serif;
+  background: #f5f7fb;
+  color: #1f2937;
+}
+
+.game {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px 16px 36px;
+}
+
+.game-header h1 {
+  margin: 0;
+  font-size: 34px;
+}
+
+.game-header p {
+  margin: 10px 0 0;
+  color: #374151;
+}
+
+.rules {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+}
+
+.rules h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.rules ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.rules li + li {
+  margin-top: 6px;
+}
+
+.banks {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr 320px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.bank,
+.river {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  min-height: 370px;
+  padding: 14px;
+}
+
+.bank h3,
+.boat-area h3 {
+  margin: 0 0 12px;
+}
+
+.characters {
+  display: grid;
+  gap: 10px;
+}
+
+.character {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.character:hover {
+  transform: translateY(-1px);
+  border-color: #818cf8;
+}
+
+.character .avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid #d1d5db;
+  background-repeat: no-repeat;
+  background-size: 674px 960px;
+  background-image: url("file:///C:/Users/28061/.cursor/projects/d-VsProject/assets/c__Users_28061_AppData_Roaming_Cursor_User_workspaceStorage_10566d2c89afb3a19f3457a7085c792e_images_26fd28df7edac71b61a4dda6f0568da6-46748fdf-9b50-4ead-b567-544879197f6e.png");
+  background-color: #ffffff;
+  flex-shrink: 0;
+}
+
+.avatar-sato {
+  background-position: -95px -170px;
+}
+
+.avatar-lady {
+  background-position: -430px -160px;
+}
+
+.avatar-ryu {
+  background-position: -95px -635px;
+}
+
+.avatar-unicorn {
+  background-position: -430px -635px;
+}
+
+.character .info {
+  min-width: 0;
+}
+
+.character .title {
+  font-weight: 700;
+}
+
+.character .meta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.river {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.boat-area {
+  width: 100%;
+  text-align: center;
+}
+
+.boat {
+  margin: 0 auto 14px;
+  width: 220px;
+  min-height: 140px;
+  border: 2px dashed #9ca3af;
+  border-radius: 16px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: #f3f4f6;
+}
+
+.slot {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  min-height: 92px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+}
+
+.slot .character {
+  width: 100%;
+  margin: 0;
+  padding: 8px;
+}
+
+.slot .character .avatar {
+  width: 42px;
+  height: 42px;
+  background-size: 560px 798px;
+}
+
+.controls {
+  margin-top: 14px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#status {
+  margin: 0;
+  font-weight: 600;
+}
+
+button {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.primary-btn {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.primary-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.ghost-btn {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+}
+
+@media (max-width: 900px) {
+  .banks {
+    grid-template-columns: 1fr;
+  }
+
+  .river,
+  .bank {
+    min-height: auto;
+  }
+}

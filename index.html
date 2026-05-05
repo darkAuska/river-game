@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>独角兽过河谜题</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="game">
+    <header class="game-header">
+      <h1>把所有人平安送到对岸</h1>
+      <p>小船最多载 2 人。</p>
+    </header>
+
+    <section class="rules">
+      <h2>危险规则</h2>
+      <ul>
+        <li>邻家大姐姐和佐藤君单独相处时，佐藤君会出事。</li>
+        <li>隆君和邻家大姐姐单独相处时，邻家大姐姐会出事。</li>
+        <li>独角兽不能与男性单独相处（含同船或同岸仅 2 人）。</li>
+      </ul>
+    </section>
+
+    <section class="banks">
+      <div class="bank" id="left-bank">
+        <h3>左岸</h3>
+        <div class="characters" id="left-characters"></div>
+      </div>
+
+      <div class="river">
+        <div class="boat-area">
+          <h3>小船</h3>
+          <div class="boat" id="boat-slots">
+            <div class="slot" data-slot="0"></div>
+            <div class="slot" data-slot="1"></div>
+          </div>
+          <button id="sail-btn" class="primary-btn">开船过河</button>
+        </div>
+      </div>
+
+      <div class="bank" id="right-bank">
+        <h3>右岸</h3>
+        <div class="characters" id="right-characters"></div>
+      </div>
+    </section>
+
+    <section class="controls">
+      <p id="status">点击角色将其上下船，满足条件后点击“开船过河”。</p>
+      <button id="reset-btn" class="ghost-btn">重新开始</button>
+    </section>
+  </main>
+
+  <script src="./script.js"></script>
+</body>
+</html>
